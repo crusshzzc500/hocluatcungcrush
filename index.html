@@ -1128,6 +1128,8 @@
       }
     }
 
+    let lawCanvasAnimation = null;
+
     function drawCanvas() {
       const canvas = document.getElementById("lawCanvas");
       const ctx = canvas.getContext("2d");
@@ -1140,83 +1142,142 @@
       const h = rect.height;
       let t = 0;
 
-      function pan(x, y, wobble) {
-        ctx.strokeStyle = "#ffe29a";
-        ctx.fillStyle = "rgba(255,226,154,.92)";
-        ctx.lineWidth = 3;
+      if (lawCanvasAnimation) cancelAnimationFrame(lawCanvasAnimation);
+
+      function roundedRect(x, y, width, height, radius) {
         ctx.beginPath();
-        ctx.moveTo(x, h * .3);
-        ctx.lineTo(x - 42, y + wobble);
-        ctx.moveTo(x, h * .3);
-        ctx.lineTo(x + 42, y + wobble);
+        ctx.roundRect(x, y, width, height, radius);
+      }
+
+      function drawPan(cx, cy, side, wobble) {
+        const topY = cy - 54 + wobble;
+        const bowlY = cy + wobble;
+        const leftX = cx - 44;
+        const rightX = cx + 44;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255,226,154,.92)";
+        ctx.fillStyle = "rgba(255,226,154,.88)";
+        ctx.lineWidth = 3.2;
+        ctx.lineCap = "round";
+
+        ctx.beginPath();
+        ctx.moveTo(cx, topY);
+        ctx.lineTo(leftX, bowlY - 4);
+        ctx.moveTo(cx, topY);
+        ctx.lineTo(rightX, bowlY - 4);
         ctx.stroke();
+
         ctx.beginPath();
-        ctx.ellipse(x, y + wobble, 52, 15, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, bowlY, 58, 17, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,248,220,.9)";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cx - 50, bowlY + 2);
+        ctx.quadraticCurveTo(cx, bowlY + 36, cx + 50, bowlY + 2);
+        ctx.strokeStyle = "rgba(255,226,154,.75)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawPaper(x, y, wobble) {
+        ctx.save();
+        ctx.translate(x, y + wobble);
+        ctx.rotate(-0.08 + Math.sin(t * 1.2) * 0.018);
+        ctx.fillStyle = "rgba(255,248,234,.96)";
+        ctx.strokeStyle = "rgba(255,226,154,.78)";
+        ctx.lineWidth = 2.5;
+        roundedRect(-56, -64, 112, 128, 8);
         ctx.fill();
         ctx.stroke();
+        ctx.fillStyle = "rgba(142,24,50,.74)";
+        for (let i = 0; i < 6; i += 1) {
+          const lineW = 74 - i * 5;
+          ctx.fillRect(-34, -38 + i * 17, lineW, 4);
+        }
+        ctx.restore();
       }
 
       function render() {
         t += .012;
         ctx.clearRect(0, 0, w, h);
+
         const g = ctx.createLinearGradient(0, 0, w, h);
-        g.addColorStop(0, "rgba(255,226,154,.16)");
-        g.addColorStop(.55, "rgba(255,255,255,.06)");
-        g.addColorStop(1, "rgba(5,137,130,.22)");
+        g.addColorStop(0, "rgba(255,226,154,.15)");
+        g.addColorStop(.55, "rgba(255,255,255,.055)");
+        g.addColorStop(1, "rgba(5,137,130,.20)");
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, w, h);
 
-        for (let i = 0; i < 28; i += 1) {
-          const x = (i * 87 + Math.sin(t + i) * 26) % (w + 80) - 40;
-          const y = 28 + ((i * 47) % Math.max(80, h - 80));
+        for (let i = 0; i < 24; i += 1) {
+          const x = (i * 83 + Math.sin(t + i) * 20) % (w + 70) - 35;
+          const y = 28 + ((i * 43) % Math.max(80, h - 80));
           ctx.beginPath();
-          ctx.arc(x, y, 1.4 + i % 4, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,226,154,${.12 + (i % 5) * .035})`;
+          ctx.arc(x, y, 1.5 + (i % 3), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,226,154,${.11 + (i % 5) * .035})`;
           ctx.fill();
         }
 
+        const scale = Math.min(w / 520, h / 340, 1.18);
+        const centerX = w * .50;
+        const centerY = h * .47;
+        const beamY = -52;
+        const leftPanX = -116;
+        const rightPanX = 116;
+        const leftWobble = Math.sin(t * 1.4) * 4;
+        const rightWobble = Math.sin(t * 1.4 + Math.PI) * 4;
+
         ctx.save();
-        ctx.translate(w * .48, h * .45);
-        ctx.rotate(Math.sin(t) * .02);
-        ctx.strokeStyle = "#ffe29a";
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+        ctx.rotate(Math.sin(t * .8) * .012);
+
+        ctx.strokeStyle = "rgba(255,226,154,.96)";
+        ctx.fillStyle = "#ffe29a";
         ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        // Trụ chính
         ctx.lineWidth = 8;
         ctx.beginPath();
-        ctx.moveTo(0, -112);
-        ctx.lineTo(0, 72);
+        ctx.moveTo(0, -118);
+        ctx.lineTo(0, 84);
         ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(-132, -68);
-        ctx.lineTo(132, -68);
-        ctx.stroke();
-        pan(-100, 12, Math.sin(t + .6) * 5);
-        pan(100, 12, Math.cos(t + .2) * 5);
-        ctx.fillStyle = "#ffe29a";
-        ctx.beginPath();
-        ctx.roundRect(-62, 72, 124, 18, 9);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.roundRect(-88, 98, 176, 22, 11);
-        ctx.fill();
-        ctx.restore();
 
-        ctx.save();
-        ctx.translate(w * .75, h * .26 + Math.sin(t * 1.7) * 5);
-        ctx.rotate(-.16);
-        ctx.fillStyle = "rgba(255,248,234,.94)";
-        ctx.strokeStyle = "rgba(255,226,154,.75)";
+        // Thanh cân ngắn hơn và cân đối hơn
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(-150, beamY);
+        ctx.lineTo(150, beamY);
+        ctx.stroke();
+
+        // Điểm treo hai đĩa cân
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.roundRect(-70, -72, 140, 134, 8);
-        ctx.fill();
+        ctx.moveTo(leftPanX, beamY);
+        ctx.lineTo(leftPanX, 0 + leftWobble);
+        ctx.moveTo(rightPanX, beamY);
+        ctx.lineTo(rightPanX, 0 + rightWobble);
         ctx.stroke();
-        ctx.fillStyle = "rgba(142,24,50,.72)";
-        for (let i = 0; i < 6; i += 1) {
-          ctx.fillRect(-46, -42 + i * 18, 92 - i * 7, 4);
-        }
+
+        drawPan(leftPanX, 38, -1, leftWobble);
+        drawPan(rightPanX, 38, 1, rightWobble);
+
+        // Đế cân
+        roundedRect(-62, 82, 124, 22, 11);
+        ctx.fill();
+        roundedRect(-94, 108, 188, 24, 12);
+        ctx.fillStyle = "rgba(255,226,154,.92)";
+        ctx.fill();
+
+        // Tờ giấy nhỏ hơn, đặt cao để không đè quá mạnh lên cán cân
+        drawPaper(115, -106, Math.sin(t * 1.6) * 4);
         ctx.restore();
 
-        requestAnimationFrame(render);
+        lawCanvasAnimation = requestAnimationFrame(render);
       }
       render();
     }
