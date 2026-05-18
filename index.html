@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hoc Luat Hinh Su</title>
+  <meta name="theme-color" content="#8d1833">
+  <link rel="manifest" href="manifest.json">
   <style>
     :root {
       color-scheme: light;
@@ -286,12 +288,50 @@
       color: var(--ink);
       font-weight: 720;
     }
-    .dots { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
-    .dot {
-      width: 100%; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%;
-      color: var(--wine-dark); background: #fff0d5; border: 1px solid rgba(81,13,31,.14); font-size: .72rem; font-weight: 900;
+    .question-map {
+      display: grid;
+      gap: 10px;
     }
-    .dot.current { color: #fff; background: var(--wine); }
+    .map-legend {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      color: var(--muted);
+      font-size: .74rem;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 999px; flex: 0 0 auto; background: #fff0d5; border: 1px solid rgba(81,13,31,.18); }
+    .legend-dot.current { background: var(--wine); border-color: var(--wine); }
+    .legend-dot.answered { background: var(--teal); border-color: var(--teal); }
+    .legend-dot.correct { background: var(--green); border-color: var(--green); }
+    .legend-dot.wrong { background: var(--red); border-color: var(--red); }
+    .dots {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 5px;
+      max-height: 164px;
+      overflow: auto;
+      padding: 2px 3px 4px 1px;
+      scrollbar-width: thin;
+    }
+    .dot {
+      width: 100%;
+      min-height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      color: var(--wine-dark);
+      background: rgba(255,240,213,.82);
+      border: 1px solid rgba(81,13,31,.12);
+      font-size: .67rem;
+      font-weight: 950;
+      box-shadow: none;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .dot:hover { transform: translateY(-1px); border-color: rgba(5,137,130,.38); }
+    .dot.current { color: #fff; background: var(--wine); box-shadow: 0 0 0 2px rgba(141,24,51,.16); }
     .dot.answered { color: #fff; background: var(--teal); }
     .dot.correct { color: #fff; background: var(--green); }
     .dot.wrong { color: #fff; background: var(--red); }
@@ -508,13 +548,40 @@
       .question-stage { padding: 15px; min-height: 0; }
       .main-actions, .nav-actions, .context-actions { display: grid; grid-template-columns: 1fr; width: 100%; }
       .btn, .arrow-btn { width: 100%; white-space: normal; }
-      .dots { grid-template-columns: repeat(6, 1fr); }
+      .dots { grid-template-columns: repeat(10, minmax(0, 1fr)); max-height: 150px; }
       .option { grid-template-columns: 36px minmax(0, 1fr); }
       .option-letter { width: 36px; height: 36px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
+
+
+    /* FULL PRO UPDATE 2026-05-18 */
+    .pro-panel { display: grid; gap: 12px; }
+    .pro-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .pro-score { font-size: 1.75rem; }
+    .quick-grid { display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+    .quick-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .mini-status { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:8px 10px; border-radius: var(--radius); background: rgba(5,137,130,.08); color: var(--muted); font-weight:850; font-size:.86rem; }
+    .mini-status b, .mini-status strong { color: var(--wine-dark); }
+    .pro-tabs { display:grid; gap:8px; }
+    .pro-details { border:1px solid var(--line); border-radius: var(--radius); background: rgba(255,255,255,.26); overflow:hidden; }
+    .pro-details summary { cursor:pointer; padding:10px 11px; color:var(--wine-dark); font-weight:950; list-style:none; display:flex; justify-content:space-between; align-items:center; }
+    .pro-details summary::after { content:'+'; font-weight:950; }
+    .pro-details[open] summary::after { content:'−'; }
+    .pro-details > div { padding:0 10px 10px; }
+    .compact-list { max-height: 190px; overflow:auto; display:grid; gap:7px; }
+    .pro-card { border:1px solid rgba(81,13,31,.11); border-radius:var(--radius); background:#fffdf7; padding:9px; font-weight:800; line-height:1.35; }
+    .pro-card small { display:block; margin-top:4px; color:var(--muted); font-weight:760; }
+    .xp-bar { height:10px; overflow:hidden; border-radius:999px; background:#ebd9bf; border:1px solid rgba(81,13,31,.12); margin-top:7px; }
+    .xp-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--gold),var(--wine)); width:0%; border-radius:inherit; }
+    .spark-chart { display:flex; align-items:flex-end; gap:5px; min-height:80px; padding:10px 4px 2px; border-radius:var(--radius); background:rgba(5,137,130,.06); }
+    .spark-bar { flex:1; min-width:8px; border-radius:6px 6px 0 0; background:linear-gradient(180deg,var(--teal),var(--wine)); min-height:5px; position:relative; }
+    .spark-bar span { position:absolute; left:50%; transform:translateX(-50%); top:-18px; font-size:.65rem; font-weight:900; color:var(--muted); }
+    .bookmark-btn.active { background: linear-gradient(135deg,var(--gold-soft),var(--gold)); color:#44270a; }
+    .bookmarked-question .question-title::before { content:'★ '; color:var(--gold); } .result-modal { display:block !important; position:static; background:white; } .result-modal-card { box-shadow:none; max-height:none; } }
+
   </style>
 </head>
 <body>
@@ -561,22 +628,25 @@
 
     <section class="workspace">
       <article class="question-stage" id="questionStage" aria-live="polite"></article>
-      <aside class="side-panel">
-        <div class="panel account-card">
-          <h2 class="mini-title">Tài khoản học tập</h2>
-          <div class="account-controls">
-            <input class="account-input" id="accountName" type="text" maxlength="32" placeholder="Tên tài khoản">
-            <div class="account-row">
-              <button class="btn ghost" type="button" id="loginBtn">Đăng nhập</button>
-              <button class="btn ghost" type="button" id="logoutBtn">Đăng xuất</button>
+
+      <aside class="side-panel pro-sidebar">
+        <div class="panel pro-panel">
+          <div class="pro-head">
+            <div>
+              <h2 class="mini-title">Bảng điều khiển Pro</h2>
+              <div class="panel-note" id="accountState">Khách</div>
             </div>
-            <div class="panel-note" id="accountState">Chưa đăng nhập. Web đang lưu cục bộ trên máy này.</div>
+            <div class="score-value pro-score" id="scoreValue">--<span>/10</span></div>
           </div>
-        </div>
-        <div class="panel timer-card">
-          <h2 class="mini-title">Timer làm bài</h2>
-          <div class="timer-display" id="timerDisplay">--:--</div>
-          <div class="timer-controls">
+
+          <div class="quick-grid three">
+            <input class="account-input" id="accountName" type="text" maxlength="32" placeholder="Tên">
+            <button class="btn ghost" type="button" id="loginBtn">Lưu</button>
+            <button class="btn ghost" type="button" id="logoutBtn">Xóa</button>
+          </div>
+
+          <div class="mini-status"><span id="timerDisplay">--:--</span><span id="scoreNote">Nộp bài để xem điểm.</span></div>
+          <div class="quick-grid three">
             <select class="select-input" id="timerPreset" aria-label="Chọn thời gian làm bài">
               <option value="0">Không giới hạn</option>
               <option value="900">15 phút</option>
@@ -584,49 +654,52 @@
               <option value="2700" selected>45 phút</option>
               <option value="3600">60 phút</option>
             </select>
-            <button class="btn ghost" type="button" id="timerStart">Bắt đầu</button>
-            <button class="btn ghost" type="button" id="timerPause">Tạm dừng</button>
+            <button class="btn ghost" type="button" id="timerStart">Start</button>
+            <button class="btn ghost" type="button" id="timerPause">Pause</button>
           </div>
-          <div class="panel-note" id="timerNote">Chế độ thi thật tự đặt 45 phút và tự nộp khi hết giờ.</div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Điểm số</h2>
-          <div class="score-value" id="scoreValue">--<span>/10</span></div>
-          <div class="panel-note" id="scoreNote">Điểm sẽ hiện sau khi nộp bài.</div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Bản đồ câu hỏi</h2>
-          <div class="dots" id="questionDots"></div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Tìm kiếm</h2>
-          <input class="search-input" id="searchInput" type="search" placeholder="Từ khóa, số câu, chủ đề...">
-          <div class="search-results" id="searchResults"></div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Thống kê chủ đề</h2>
-          <div class="chapter-stats" id="chapterStats"></div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">AI phân tích điểm yếu</h2>
-          <div class="ai-insight" id="aiInsight">
-            <div class="panel-note">Nộp bài xong, hệ thống sẽ phân tích chủ đề hay sai và gợi ý cách ôn.</div>
+          <div class="panel-note" id="timerNote">Thi thật: 45 phút, tự nộp khi hết giờ.</div>
+
+          <div class="quick-grid two">
+            <button class="btn ghost" type="button" id="bookmarkListBtn">Câu ghim</button>
+            <button class="btn ghost" type="button" id="smartRandomBtn">Smart random</button>
           </div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Đồng bộ online</h2>
-          <div class="sync-actions">
-            <button class="btn ghost" type="button" id="syncBtn">Đồng bộ điểm</button>
-            <button class="btn ghost" type="button" id="exportBtn">Xuất dữ liệu</button>
+
+          <div class="pro-card" id="xpBox">Level 1 • 0 XP<div class="xp-bar"><div class="xp-fill"></div></div></div>
+          <div class="pro-card" id="streakBox">🔥 Streak: 0 ngày<small>Học mỗi ngày để giữ chuỗi.</small></div>
+
+          <input class="search-input" id="searchInput" type="search" placeholder="Tìm câu hỏi, chương, từ khóa...">
+          <div class="search-results compact-list" id="searchResults"></div>
+
+          <div class="pro-tabs">
+            <details class="pro-details" open><summary>Câu hỏi</summary>
+              <div class="question-map">
+                <div class="map-legend" aria-label="Chú thích trạng thái câu hỏi">
+                  <span class="legend-item"><i class="legend-dot current"></i>Đang làm</span>
+                  <span class="legend-item"><i class="legend-dot answered"></i>Đã chọn</span>
+                  <span class="legend-item"><i class="legend-dot correct"></i>Đúng</span>
+                  <span class="legend-item"><i class="legend-dot wrong"></i>Sai</span>
+                </div>
+                <div class="dots" id="questionDots"></div>
+              </div>
+            </details>
+            <details class="pro-details"><summary>Thống kê chương</summary><div class="chapter-stats compact-list" id="chapterStats"></div></details>
+            <details class="pro-details"><summary>AI phân tích điểm yếu</summary><div class="ai-insight compact-list" id="aiInsight"><div class="panel-note">Nộp bài xong sẽ có phân tích.</div></div></details>
+            <details class="pro-details"><summary>Biểu đồ tiến bộ</summary><div id="progressChart" class="spark-chart"></div></details>
+            <details class="pro-details"><summary>Lịch sử làm bài</summary><div id="historyBox" class="compact-list"></div></details>
+            <details class="pro-details"><summary>Câu đã ghim</summary><div id="bookmarkBox" class="compact-list"></div></details>
+            <details class="pro-details"><summary>Bảng xếp hạng</summary><div class="leaderboard compact-list" id="leaderboard"></div></details>
           </div>
-          <div class="panel-note sync-state" id="syncState">Chưa cấu hình host database online. Điểm vẫn được lưu trên máy.</div>
-        </div>
-        <div class="panel">
-          <h2 class="mini-title">Bảng xếp hạng</h2>
-          <div class="leaderboard" id="leaderboard"></div>
+
+          <div style="display:none" aria-hidden="true">
+            <button type="button" id="syncBtn"></button>
+            <button type="button" id="exportBtn"></button>
+            <div id="syncState"></div>
+          </div>
         </div>
       </aside>
+
     </section>
+
   </main>
   <script>
     const APP_VERSION = "2026-05-18-180013";
@@ -1342,6 +1415,151 @@
       }
       renderCanvas();
     }
+
+
+    /* FULL PRO UPDATE 2026-05-18 */
+    const ADV_KEYS = {
+      bookmarks: "criminalLawQuiz.v4.bookmarks",
+      attempts: "criminalLawQuiz.v4.attempts",
+      history: "criminalLawQuiz.v4.history",
+      xp: "criminalLawQuiz.v4.xp",
+      streak: "criminalLawQuiz.v4.streak"
+    };
+    function getJSON(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } }
+    function setJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+    function todayKey() { return new Date().toISOString().slice(0, 10); }
+    function addDaysKey(dateKey, days) { const d = new Date(dateKey + "T00:00:00"); d.setDate(d.getDate() + days); return d.toISOString().slice(0,10); }
+    function tone(type) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = type === "ok" ? 740 : type === "bad" ? 180 : 420;
+        gain.gain.value = .045;
+        osc.connect(gain); gain.connect(ctx.destination); osc.start();
+        setTimeout(() => { osc.stop(); ctx.close(); }, type === "bad" ? 170 : 110);
+      } catch {}
+    }
+    function recordAdvancedResult(result) {
+      const attempts = getJSON(ADV_KEYS.attempts, {});
+      displayQuestions.forEach(q => {
+        const picked = answers[q.uid];
+        const ok = picked === q.correctDisplayIndex;
+        const row = attempts[q.uid] || { seen:0, correct:0, wrong:0, last:"" };
+        row.seen += 1; row.correct += ok ? 1 : 0; row.wrong += ok ? 0 : 1; row.last = new Date().toISOString();
+        attempts[q.uid] = row;
+      });
+      setJSON(ADV_KEYS.attempts, attempts);
+      const hist = getJSON(ADV_KEYS.history, []);
+      hist.push({ ...result, at: new Date().toISOString(), user: currentUser?.name || "Khách" });
+      setJSON(ADV_KEYS.history, hist.slice(-60));
+      const xp = getJSON(ADV_KEYS.xp, { value:0 });
+      xp.value = Math.max(0, Number(xp.value || 0) + result.correct * 5 + Math.round(result.point * 10));
+      setJSON(ADV_KEYS.xp, xp);
+      const st = getJSON(ADV_KEYS.streak, { count:0, last:"" });
+      const today = todayKey();
+      if (st.last !== today) {
+        st.count = st.last && addDaysKey(st.last, 1) === today ? st.count + 1 : 1;
+        st.last = today;
+      }
+      setJSON(ADV_KEYS.streak, st);
+    }
+    const __baseSubmitQuiz = submitQuiz;
+    submitQuiz = function(autoSubmit = false) {
+      const before = submitted;
+      __baseSubmitQuiz(autoSubmit);
+      if (!before && submitted && lastResult) {
+        recordAdvancedResult(lastResult);
+        renderAdvancedPanel();
+        setTimeout(() => showResultDetail(), 450);
+      }
+    };
+    const __baseRender = render;
+    render = function() {
+      __baseRender();
+      enhanceQuestionUI();
+      renderAdvancedPanel();
+    };
+    function bookmarkSet() { return new Set(getJSON(ADV_KEYS.bookmarks, [])); }
+    function toggleBookmark(uid) {
+      const set = bookmarkSet();
+      if (set.has(uid)) set.delete(uid); else set.add(uid);
+      setJSON(ADV_KEYS.bookmarks, [...set]);
+      render();
+    }
+    function enhanceQuestionUI() {
+      const q = currentQuestion(); if (!q) return;
+      const set = bookmarkSet();
+      stage.classList.toggle("bookmarked-question", set.has(q.uid));
+      const box = stage.querySelector(".context-actions");
+      if (box && !document.getElementById("bookmarkBtn")) {
+        const btn = document.createElement("button");
+        btn.className = "btn ghost bookmark-btn" + (set.has(q.uid) ? " active" : "");
+        btn.type = "button"; btn.id = "bookmarkBtn";
+        btn.textContent = set.has(q.uid) ? "Bỏ ghim" : "Ghim câu";
+        btn.addEventListener("click", () => toggleBookmark(q.uid));
+        box.prepend(btn);
+      }
+    }
+    function renderAdvancedPanel() {
+      const attempts = getJSON(ADV_KEYS.attempts, {});
+      const hist = getJSON(ADV_KEYS.history, []);
+      const xp = getJSON(ADV_KEYS.xp, { value:0 });
+      const st = getJSON(ADV_KEYS.streak, { count:0, last:"" });
+      const xpBox = document.getElementById("xpBox");
+      if (xpBox) {
+        const value = Number(xp.value || 0), level = Math.floor(value / 500) + 1, next = value % 500;
+        xpBox.innerHTML = `<b>Level ${level}</b> • ${value} XP<small>${500-next} XP nữa lên level</small><div class="xp-bar"><div class="xp-fill" style="width:${Math.round(next/500*100)}%"></div></div>`;
+      }
+      const streakBox = document.getElementById("streakBox");
+      if (streakBox) streakBox.innerHTML = `🔥 <b>Streak: ${st.count || 0} ngày</b><small>${st.last ? `Lần học gần nhất: ${new Date(st.last).toLocaleDateString("vi-VN")}` : "Chưa có lịch sử học."}</small>`;
+      const historyBox = document.getElementById("historyBox");
+      if (historyBox) historyBox.innerHTML = hist.length ? hist.slice(-8).reverse().map(r => `<div class="pro-card"><b>${escapeHtml(r.set)} • ${Number(r.point).toFixed(1)}/10</b><small>${r.correct}/${r.total} đúng • ${Math.floor(r.durationSec/60)}p${r.durationSec%60}s • ${new Date(r.finishedAt || r.at).toLocaleString("vi-VN")}</small></div>`).join("") : `<div class="panel-note">Chưa có lịch sử làm bài.</div>`;
+      const chart = document.getElementById("progressChart");
+      if (chart) {
+        const rows = hist.slice(-12);
+        chart.innerHTML = rows.length ? rows.map(r => `<div class="spark-bar" style="height:${Math.max(8, Number(r.point || 0) * 8)}%"><span>${Number(r.point||0).toFixed(1)}</span></div>`).join("") : `<div class="panel-note">Nộp vài bài để có biểu đồ.</div>`;
+      }
+      renderBookmarkBox();
+    }
+    function renderBookmarkBox() {
+      const box = document.getElementById("bookmarkBox"); if (!box) return;
+      const ids = [...bookmarkSet()].filter(uid => byId[uid]);
+      box.innerHTML = ids.length ? ids.map(uid => {
+        const q = byId[uid];
+        return `<button class="result-item" type="button" data-uid="${uid}"><b>Đề ${q.set} • Câu ${q.number}</b><small>${escapeHtml(q.question)}</small></button>`;
+      }).join("") : `<div class="panel-note">Chưa ghim câu nào.</div>`;
+      box.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => openSearchResult(btn.dataset.uid)));
+    }
+    function startSmartRandom() {
+      const attempts = getJSON(ADV_KEYS.attempts, {});
+      const weighted = QUESTION_BANK.map(q => ({ q, w: 1 + ((attempts[q.uid]?.wrong || 0) * 4) + (bookmarkSet().has(q.uid) ? 3 : 0) }));
+      const pool = [];
+      weighted.forEach(({q,w}) => { for (let i=0;i<Math.min(12,w);i++) pool.push(q); });
+      activeSet = "SMART"; activeMode = "random"; reviewOriginSet = ""; examLocked = false;
+      displayQuestions = shuffle(pool).filter((q,i,arr)=>arr.findIndex(x=>x.uid===q.uid)===i).slice(0,60).map(q => prepareQuestion(q));
+      currentIndex=0; answers={}; submitted=false; lastResult=null; sessionStartedAt=Date.now(); submitBtn.disabled=false; resetTimer(); saveProgress(); render();
+    }
+    document.addEventListener("keydown", e => {
+      if (["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)) return;
+      if (e.key === "ArrowLeft" && currentIndex > 0) { currentIndex--; render(); }
+      if (e.key === "ArrowRight" && currentIndex < displayQuestions.length-1) { currentIndex++; render(); }
+      if (["1","2","3","4"].includes(e.key) && !submitted) { const q=currentQuestion(); answers[q.uid]=Number(e.key)-1; tone("ok"); render(); }
+      if (e.key.toLowerCase() === "b") toggleBookmark(currentQuestion().uid);
+    });
+    let touchX = null;
+    stage.addEventListener("touchstart", e => { touchX = e.changedTouches[0].clientX; }, { passive:true });
+    stage.addEventListener("touchend", e => { if (touchX == null) return; const dx = e.changedTouches[0].clientX - touchX; if (Math.abs(dx) > 60) { if (dx < 0 && currentIndex < displayQuestions.length-1) currentIndex++; if (dx > 0 && currentIndex > 0) currentIndex--; render(); } touchX = null; }, { passive:true });
+    document.addEventListener("change", e => { if (e.target && e.target.matches(".option input")) setTimeout(() => tone("ok"), 20); });
+    window.addEventListener("load", () => {
+      document.getElementById("bookmarkListBtn")?.addEventListener("click", () => document.querySelectorAll(".pro-details")[5]?.setAttribute("open", ""));
+      document.getElementById("smartRandomBtn")?.addEventListener("click", startSmartRandom);
+      renderAdvancedPanel();
+      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    });
+
     submitBtn.addEventListener("click", () => submitQuiz(false));
     shuffleBtn.addEventListener("click", reshuffleCurrent);
     switchSetBtn.addEventListener("click", switchSet);
