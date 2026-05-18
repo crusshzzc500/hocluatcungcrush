@@ -274,16 +274,9 @@
     .mini-title { margin: 0 0 10px; color: var(--wine-dark); font-size: 1rem; font-weight: 950; }
     .score-value { display: flex; align-items: baseline; gap: 8px; color: var(--wine-dark); font-size: 2rem; font-weight: 950; }
     .score-value span { color: var(--muted); font-size: .96rem; font-weight: 850; }
-    .panel-note, .music-state { color: var(--muted); font-size: .9rem; font-weight: 760; line-height: 1.45; }
-    .music-card { position: relative; overflow: hidden; }
-    .music-card::after {
-      content: ""; position: absolute; inset: auto 12px 12px auto; width: 54px; height: 54px; border-radius: 50%;
-      border: 9px solid rgba(5,137,130,.12); border-top-color: rgba(141,24,51,.34); animation: spin 5s linear infinite;
-    }
+    .panel-note { color: var(--muted); font-size: .9rem; font-weight: 760; line-height: 1.45; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .music-controls { position: relative; z-index: 1; display: grid; gap: 10px; }
-    .music-row { display: flex; gap: 8px; align-items: center; }
-    .volume, .search-input, .select-input { width: 100%; accent-color: var(--wine); }
+    .search-input, .select-input { width: 100%; accent-color: var(--wine); }
     .search-input, .select-input {
       min-height: 42px;
       padding: 10px 11px;
@@ -469,8 +462,6 @@
     .sync-state.warn { color: var(--red); }
     .exam-lock .support-box { display: none !important; }
     
-    #lofiAudio { position: fixed; width: 1px; height: 1px; left: -20px; top: -20px; opacity: .01; pointer-events: none; }
-
     @media (max-width: 820px) {
       .hero { min-height: 0; padding-top: 6px; }
       h1 { font-size: clamp(2.1rem, 12vw, 4rem); }
@@ -515,7 +506,7 @@
       .hero-stats, .floating-law, .side-panel { grid-template-columns: 1fr; }
       .visual, #lawCanvas { min-height: 330px; height: 330px; }
       .question-stage { padding: 15px; min-height: 0; }
-      .main-actions, .nav-actions, .context-actions, .music-row { display: grid; grid-template-columns: 1fr; width: 100%; }
+      .main-actions, .nav-actions, .context-actions { display: grid; grid-template-columns: 1fr; width: 100%; }
       .btn, .arrow-btn { width: 100%; white-space: normal; }
       .dots { grid-template-columns: repeat(6, 1fr); }
       .option { grid-template-columns: 36px minmax(0, 1fr); }
@@ -603,20 +594,6 @@
           <div class="score-value" id="scoreValue">--<span>/10</span></div>
           <div class="panel-note" id="scoreNote">Điểm sẽ hiện sau khi nộp bài.</div>
         </div>
-        <div class="panel music-card">
-          <h2 class="mini-title">Âm thanh học bài</h2>
-          <div class="music-controls">
-            <div class="music-row">
-              <button class="btn ghost" type="button" id="musicToggle">Bật nhạc</button>
-              <button class="btn ghost" type="button" id="muteToggle">Tắt tiếng</button>
-            </div>
-            <label>
-              <span class="music-state">Âm lượng</span>
-              <input class="volume" id="volumeRange" type="range" min="0" max="100" value="35">
-            </label>
-            <div class="music-state" id="musicState">Nhạc bắt đầu sau cú nhấp đầu tiên.</div>
-          </div>
-        </div>
         <div class="panel">
           <h2 class="mini-title">Bản đồ câu hỏi</h2>
           <div class="dots" id="questionDots"></div>
@@ -651,8 +628,6 @@
       </aside>
     </section>
   </main>
-
-  <audio id="lofiAudio" preload="auto" loop playsinline src="study-music.mp3"></audio>
   <script>
     const APP_VERSION = "2026-05-18-180013";
     const EXTRA_FEATURES_VERSION = "2026-05-18-extra-01";
@@ -676,8 +651,6 @@
     let supportTimer = null;
     let sessionStartedAt = Date.now();
     let lastResult = null;
-    let musicEnabled = false;
-    let musicMuted = false;
     let currentUser = null;
     let timerSeconds = 0;
     let timerTotalSeconds = 0;
@@ -717,12 +690,6 @@
     const syncBtn = document.getElementById("syncBtn");
     const exportBtn = document.getElementById("exportBtn");
     const syncState = document.getElementById("syncState");
-    const musicToggle = document.getElementById("musicToggle");
-    const muteToggle = document.getElementById("muteToggle");
-    const volumeRange = document.getElementById("volumeRange");
-    const musicState = document.getElementById("musicState");
-    const lofiAudio = document.getElementById("lofiAudio");
-
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -949,7 +916,6 @@
       stage.querySelectorAll("input[type='radio']").forEach(input => {
         input.addEventListener("change", event => {
           answers[q.uid] = Number(event.target.value);
-          startMusicFromGesture();
           render();
         });
       });
@@ -1302,33 +1268,6 @@
       URL.revokeObjectURL(url);
     }
     
-    function startMusicFromGesture() {
-      if (!musicEnabled || musicMuted) return;
-      lofiAudio.volume = Number(volumeRange.value) / 100;
-      lofiAudio.play().then(() => {
-        musicToggle.textContent = "Tạm dừng";
-        musicState.textContent = "Đang phát study music.";
-      }).catch(() => {
-        musicState.textContent = "Hãy nhấp thêm một lần để trình duyệt cho phép phát nhạc.";
-      });
-    }
-    function toggleMusic() {
-      musicEnabled = !musicEnabled;
-      musicToggle.textContent = musicEnabled ? "Tạm dừng" : "Bật nhạc";
-      lofiAudio.volume = Number(volumeRange.value) / 100;
-      if (musicEnabled && !musicMuted) startMusicFromGesture();
-      else {
-        lofiAudio.pause();
-        musicState.textContent = "Nhạc đang tạm dừng.";
-      }
-    }
-    function toggleMute() {
-      musicMuted = !musicMuted;
-      lofiAudio.muted = musicMuted;
-      muteToggle.textContent = musicMuted ? "Mở tiếng" : "Tắt tiếng";
-      musicState.textContent = musicMuted ? "Đã tắt tiếng." : "Đã mở tiếng.";
-      if (!musicMuted && musicEnabled) startMusicFromGesture();
-    }
     function drawCanvas() {
       const canvas = document.getElementById("lawCanvas");
       const ctx = canvas.getContext("2d");
@@ -1418,14 +1357,6 @@
     syncBtn.addEventListener("click", syncOnline);
     exportBtn.addEventListener("click", exportLocalData);
     searchInput.addEventListener("input", runSearch);
-    musicToggle.addEventListener("click", () => { toggleMusic(); startMusicFromGesture(); });
-    muteToggle.addEventListener("click", toggleMute);
-    volumeRange.addEventListener("input", () => {
-      lofiAudio.volume = Number(volumeRange.value) / 100;
-      if (musicEnabled && !musicMuted) musicState.textContent = "Đã chỉnh âm lượng.";
-    });
-    document.addEventListener("click", startMusicFromGesture);
-    lofiAudio.addEventListener("error", () => { musicState.textContent = "Không phát được study-music.mp3. Hãy kiểm tra file nhạc trong thư mục web."; });
     loadAccount();
     applyTheme(localStorage.getItem(THEME_KEY) || "light");
     if (!restoreProgress()) startSet("A", true);
