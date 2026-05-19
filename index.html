@@ -1758,8 +1758,6 @@
       }
       const streakBox = document.getElementById("streakBox");
       if (streakBox) streakBox.innerHTML = `🔥 <b>Streak: ${st.count || 0} ngày</b><small>${st.last ? `Lần học gần nhất: ${new Date(st.last).toLocaleDateString("vi-VN")}` : "Chưa có lịch sử học."}</small>`;
-      const historyBox = document.getElementById("historyBox");
-      if (historyBox) historyBox.innerHTML = hist.length ? hist.slice(-8).reverse().map(r => `<div class="pro-card"><b>${escapeHtml(r.set)} • ${Number(r.point).toFixed(1)}/10</b><small>${r.correct}/${r.total} đúng • ${Math.floor(r.durationSec/60)}p${r.durationSec%60}s • ${new Date(r.finishedAt || r.at).toLocaleString("vi-VN")}</small></div>`).join("") : `<div class="panel-note">Chưa có lịch sử làm bài.</div>`;
       const chart = document.getElementById("progressChart");
       if (chart) {
         const rows = hist.slice(-12);
