@@ -1649,7 +1649,7 @@
       document.getElementById("bookmarkListBtn")?.addEventListener("click", () => document.querySelectorAll(".pro-details")[5]?.setAttribute("open", ""));
       document.getElementById("smartRandomBtn")?.addEventListener("click", startSmartRandom);
       renderAdvancedPanel();
-      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+      if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js?v=8").catch(()=>{});
     });
 
     submitBtn.addEventListener("click", () => submitQuiz(false));
