@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "leaderboard": {
+      ".read": true,
+      "$playerId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['playerId', 'name', 'score', 'correct', 'total', 'set', 'durationSec']) && newData.child('playerId').isString() && newData.child('playerId').val() == $playerId && newData.child('name').isString() && newData.child('name').val().length <= 32 && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 10 && newData.child('correct').isNumber() && newData.child('correct').val() >= 0 && newData.child('correct').val() <= 60 && newData.child('total').isNumber() && newData.child('total').val() >= 1 && newData.child('total').val() <= 60 && newData.child('durationSec').isNumber() && newData.child('durationSec').val() >= 0 && newData.child('durationSec').val() <= 7200"
+      }
+    }
+  }
+}

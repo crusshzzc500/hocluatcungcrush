@@ -1190,6 +1190,10 @@
       try { return JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]"); } catch { return []; }
     }
     function renderLeaderboard() {
+      if (window.hocLuatRenderOnlineLeaderboard) {
+        window.hocLuatRenderOnlineLeaderboard();
+        return;
+      }
       const rows = loadLeaderboard();
       leaderboard.innerHTML = rows.length ? rows.map((row, index) => `
         <div class="leader-row"><b>#${index + 1} • ${escapeHtml(row.user || "Khách")} • ${escapeHtml(row.set)} • ${row.score}/10</b><small>${row.correct}/${row.total} câu đúng • ${Math.floor(row.durationSec / 60)}p${row.durationSec % 60}s • ${new Date(row.finishedAt).toLocaleString("vi-VN")}</small></div>
@@ -1688,12 +1692,56 @@
       };
 
       let db = null;
+      let leaderboardRef = null;
+      let onlineRows = [];
+      let onlineReady = false;
+      const CLIENT_ID_KEY = "criminalLawQuiz.v3.clientId";
       const state = () => document.getElementById("onlineLeaderboardState");
       const board = () => document.getElementById("leaderboard");
 
       function setState(text) {
         const el = state();
         if (el) el.textContent = text;
+      }
+
+      function html(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function normalizeName(value) {
+        return String(value || "")
+          .trim()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[đĐ]/g, "d")
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 72);
+      }
+
+      function hasRealName(value) {
+        const normalized = normalizeName(value);
+        return !!normalized && normalized !== "an-danh" && normalized !== "khach";
+      }
+
+      function clientId() {
+        let id = "";
+        try {
+          id = localStorage.getItem(CLIENT_ID_KEY) || "";
+          if (!id) {
+            id = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+            localStorage.setItem(CLIENT_ID_KEY, id);
+          }
+        } catch (_) {
+          id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+        return id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
       }
 
       function safeName() {
@@ -1709,6 +1757,59 @@
         return String(typed || saved || "Ẩn danh").slice(0, 32);
       }
 
+      function playerIdForWrite(name) {
+        return hasRealName(name) ? normalizeName(name) : `guest-${clientId()}`;
+      }
+
+      function playerIdForRead(item, childKey) {
+        if (item && item.playerId) return String(item.playerId);
+        const rawName = item?.name || item?.user || "";
+        return hasRealName(rawName) ? normalizeName(rawName) : String(childKey || `guest-${clientId()}`);
+      }
+
+      function cleanDuration(row) {
+        const value = Number(row?.durationSec);
+        return Number.isFinite(value) && value > 0 ? value : Number.MAX_SAFE_INTEGER;
+      }
+
+      function compareRows(a, b) {
+        const byScore = Number(b?.score || 0) - Number(a?.score || 0);
+        if (byScore) return byScore;
+        const byCorrect = Number(b?.correct || 0) - Number(a?.correct || 0);
+        if (byCorrect) return byCorrect;
+        const byDuration = cleanDuration(a) - cleanDuration(b);
+        if (byDuration) return byDuration;
+        return Number(b?.updatedAtClient || b?.createdAtClient || b?.updatedAt || b?.createdAt || 0) - Number(a?.updatedAtClient || a?.createdAtClient || a?.updatedAt || a?.createdAt || 0);
+      }
+
+      function isBetterScore(next, current) {
+        if (!current) return true;
+        return compareRows(next, current) < 0;
+      }
+
+      function renderOnlineLeaderboard() {
+        const el = board();
+        if (!el) return;
+        if (!onlineReady) {
+          el.innerHTML = '<div class="panel-note">Đang tải bảng xếp hạng online...</div>';
+          return;
+        }
+        if (!onlineRows.length) {
+          el.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
+          return;
+        }
+        el.innerHTML = onlineRows.slice(0, 10).map((item, index) => {
+          const score = Number(item.score || 0).toFixed(1);
+          const stamp = Number(item.updatedAt || item.createdAt || item.updatedAtClient || item.createdAtClient || 0);
+          const date = stamp ? new Date(stamp).toLocaleString("vi-VN") : "";
+          const duration = cleanDuration(item) === Number.MAX_SAFE_INTEGER ? "--" : `${Math.floor(Number(item.durationSec || 0) / 60)}p${Number(item.durationSec || 0) % 60}s`;
+          const attempts = Number(item.attempts || 0) > 1 ? ` • ${Number(item.attempts || 0)} lượt` : "";
+          return `<div class="leader-row"><b>#${index + 1} • ${html(item.name || "Ẩn danh")} • ${score}/10</b><small>${Number(item.correct || 0)}/${Number(item.total || 0)} câu đúng • ${html(item.set || "")} • ${duration}${date ? ` • ${date}` : ""}${attempts}</small></div>`;
+        }).join("");
+      }
+
+      window.hocLuatRenderOnlineLeaderboard = renderOnlineLeaderboard;
+
       try {
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         db = firebase.database();
@@ -1721,42 +1822,89 @@
 
       window.hocLuatSaveOnlineScore = function (result) {
         if (!db || !result) return Promise.resolve();
+        const name = safeName();
+        const playerId = playerIdForWrite(name);
+        const now = Date.now();
         const payload = {
-          name: safeName(),
+          playerId,
+          name,
           score: Number(Number(result.point || 0).toFixed(1)),
           correct: Number(result.correct || 0),
           total: Number(result.total || 0),
           set: String(result.set || ""),
           mode: String(result.mode || ""),
           durationSec: Number(result.durationSec || 0),
-          createdAt: firebase.database.ServerValue.TIMESTAMP
+          updatedAt: firebase.database.ServerValue.TIMESTAMP,
+          updatedAtClient: now
         };
         setState("Đang lưu điểm...");
-        return db.ref("leaderboard").push(payload).then(() => {
-          setState("Đã lưu điểm lên Firebase");
+        return db.ref("leaderboard").child(playerId).transaction((current) => {
+          const attempts = Number(current?.attempts || 0) + 1;
+          if (!current) {
+            return {
+              ...payload,
+              attempts,
+              createdAt: firebase.database.ServerValue.TIMESTAMP,
+              createdAtClient: now
+            };
+          }
+          const common = {
+            ...current,
+            playerId,
+            name,
+            attempts,
+            lastTriedAt: firebase.database.ServerValue.TIMESTAMP,
+            lastTriedAtClient: now
+          };
+          if (isBetterScore(payload, current)) {
+            return {
+              ...common,
+              ...payload,
+              createdAt: current.createdAt || firebase.database.ServerValue.TIMESTAMP,
+              createdAtClient: current.createdAtClient || now
+            };
+          }
+          return common;
+        }).then((resultState) => {
+          if (!resultState.committed) throw new Error("Firebase không nhận lượt ghi");
+          setState("Đã cập nhật bảng xếp hạng online");
         });
       };
 
       window.hocLuatLoadOnlineLeaderboard = function () {
-        const el = board();
-        if (!db || !el) return;
-        db.ref("leaderboard").orderByChild("score").limitToLast(30).on("value", (snapshot) => {
-          const data = [];
-          snapshot.forEach((child) => data.push(child.val()));
-          data.sort((a, b) => (Number(b.score || 0) - Number(a.score || 0)) || (Number(b.createdAt || 0) - Number(a.createdAt || 0)));
+        if (!db || !board()) return;
+        if (leaderboardRef) leaderboardRef.off("value");
+        leaderboardRef = db.ref("leaderboard");
+        setState("Đang tải bảng xếp hạng online...");
+        leaderboardRef.on("value", (snapshot) => {
+          const bestByPlayer = new Map();
+          snapshot.forEach((child) => {
+            const value = child.val();
+            if (!value || typeof value !== "object") return;
+            const row = {
+              ...value,
+              playerId: playerIdForRead(value, child.key),
+              name: String(value.name || value.user || "Ẩn danh").slice(0, 32),
+              score: Number(value.score || value.point || 0),
+              correct: Number(value.correct || 0),
+              total: Number(value.total || 0),
+              durationSec: Number(value.durationSec || 0),
+              set: String(value.set || ""),
+              attempts: Number(value.attempts || 1)
+            };
+            const old = bestByPlayer.get(row.playerId);
+            if (!old || compareRows(row, old) < 0) bestByPlayer.set(row.playerId, row);
+          });
+          onlineRows = [...bestByPlayer.values()].sort(compareRows).slice(0, 50);
+          onlineReady = true;
           setState("Đã kết nối Firebase");
-          if (!data.length) {
-            el.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
-            return;
-          }
-          el.innerHTML = data.slice(0, 10).map((item, index) => {
-            const d = item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "";
-            const score = Number(item.score || 0).toFixed(1);
-            return `<div class="leader-row"><b>#${index + 1} • ${item.name || "Ẩn danh"} • ${score}/10</b><small>${item.correct || 0}/${item.total || 0} câu đúng • ${item.set || ""} • ${d}</small></div>`;
-          }).join("");
+          renderOnlineLeaderboard();
         }, (error) => {
           console.error("Firebase read failed:", error);
           setState("Lỗi đọc Firebase: " + (error.code || error.message || "unknown"));
+          onlineReady = true;
+          onlineRows = [];
+          renderOnlineLeaderboard();
         });
       };
 
