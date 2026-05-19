@@ -582,6 +582,76 @@
     .bookmark-btn.active { background: linear-gradient(135deg,var(--gold-soft),var(--gold)); color:#44270a; }
     .bookmarked-question .question-title::before { content:'★ '; color:var(--gold); } .result-modal { display:block !important; position:static; background:white; } .result-modal-card { box-shadow:none; max-height:none; } }
 
+  
+
+    /* CLEAN COMPACT ACTION BAR UPDATE */
+    .control-bar {
+      position: relative;
+      top: auto;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+      border-radius: 18px;
+    }
+    .main-actions {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      justify-content: stretch;
+    }
+    .main-actions .btn {
+      min-height: 38px;
+      padding: 8px 9px;
+      border-radius: 12px;
+      font-size: .86rem;
+      line-height: 1.15;
+      white-space: normal;
+      box-shadow: 0 7px 16px rgba(43,10,20,.12);
+    }
+    .progress-track { height: 9px; }
+    .progress-top { gap: 6px; }
+    .set-title { font-size: .98rem; }
+    .progress-meta { font-size: .82rem; }
+
+    @media (max-width: 680px) {
+      .app { width: min(100% - 14px, 1220px); padding-top: 8px; }
+      .hero { display: none; }
+      .control-bar {
+        position: static;
+        padding: 10px;
+        margin: 8px 0 12px;
+        border-radius: 16px;
+      }
+      .main-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+      }
+      .main-actions .btn {
+        min-height: 40px;
+        padding: 8px 7px;
+        font-size: .84rem;
+        border-radius: 12px;
+      }
+      .workspace { grid-template-columns: 1fr; gap: 10px; }
+      .question-stage { padding: 10px; border-radius: 14px; }
+      .question-card { gap: 11px; }
+      .question-title { font-size: 1.03rem; line-height: 1.42; }
+      .option {
+        min-height: 54px;
+        padding: 10px;
+        grid-template-columns: 32px minmax(0,1fr);
+        gap: 9px;
+      }
+      .option-letter { width: 32px; height: 32px; }
+      .option-text { font-size: .94rem; line-height: 1.42; }
+      .side-panel { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 681px) and (max-width: 1000px) {
+      .main-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+
   </style>
 </head>
 <body>
@@ -620,9 +690,11 @@
         <button class="btn teal" type="button" id="shuffleBtn">Đảo bài</button>
         <button class="btn gold" type="button" id="switchSetBtn">Đổi đề</button>
         <button class="btn ghost" type="button" id="wrongModeBtn">Ôn câu sai</button>
-        <button class="btn teal" type="button" id="randomModeBtn">Random vô hạn</button>
         <button class="btn danger" type="button" id="realExamBtn">Thi thật</button>
-        <button class="btn dark" type="button" id="themeToggle">Dark mode</button>
+      </div>
+      <div style="display:none" aria-hidden="true">
+        <button type="button" id="randomModeBtn"></button>
+        <button type="button" id="themeToggle"></button>
       </div>
     </section>
 
