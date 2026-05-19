@@ -584,7 +584,7 @@
 
   
 
-    /* FIREBASE ONLINE LEADERBOARD + COMPACT UPDATE */
+    /* COMPACT UI + FIREBASE VERIFIED UPDATE */
     .control-bar {
       position: relative;
       top: auto;
@@ -610,14 +610,11 @@
       box-shadow: 0 7px 16px rgba(43,10,20,.12);
     }
     .progress-track { height: 9px; }
-    .progress-top { gap: 6px; }
-    .set-title { font-size: .98rem; }
-    .progress-meta { font-size: .82rem; }
     .online-badge {
       display:inline-flex;
       align-items:center;
       gap:6px;
-      margin-top:4px;
+      margin:0 0 8px;
       color:var(--teal);
       font-size:.78rem;
       font-weight:900;
@@ -630,7 +627,6 @@
       background:var(--teal);
       box-shadow:0 0 0 4px rgba(5,137,130,.12);
     }
-
     @media (max-width: 680px) {
       .app { width: min(100% - 14px, 1220px); padding-top: 8px; }
       .hero { display: none; }
@@ -1138,17 +1134,11 @@
       progressFill.style.width = `${Math.round((correct / total) * 100)}%`;
       submitBtn.disabled = true;
       addLeaderboard(lastResult);
-      if (window.saveOnlineScore) {
-        window.saveOnlineScore(
-          currentUser?.name || document.getElementById("accountName")?.value || "Ẩn danh",
-          Number(lastResult.point.toFixed(1)),
-          lastResult.correct,
-          lastResult.total,
-          lastResult.set
-        ).catch(error => {
-          console.error("Không lưu được điểm Firebase:", error);
-          const state = document.getElementById("onlineLeaderboardState");
-          if (state) state.textContent = "Lỗi lưu điểm Firebase";
+      if (window.hocLuatSaveOnlineScore && lastResult) {
+        window.hocLuatSaveOnlineScore(lastResult).catch(error => {
+          console.error("Firebase save failed:", error);
+          const st = document.getElementById("onlineLeaderboardState");
+          if (st) st.textContent = "Lỗi lưu Firebase: " + (error?.code || error?.message || "unknown");
         });
       }
       queueSync(lastResult);
@@ -1682,91 +1672,97 @@
     window.addEventListener("resize", drawCanvas);
   </script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, push, set, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+  <!-- Firebase online leaderboard: verified compat build -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script>
+    (function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyB7TlOy5XvF8ttxGiTAFmucYLRsTMscIUU",
+        authDomain: "hocluatcungcrush.firebaseapp.com",
+        databaseURL: "https://hocluatcungcrush-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "hocluatcungcrush",
+        storageBucket: "hocluatcungcrush.firebasestorage.app",
+        messagingSenderId: "904057128627",
+        appId: "1:904057128627:web:689a11c925c4176371d2c6"
+      };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyB7TlOy5XvF8ttxGiTAFmucYLRsTMscIUU",
-    authDomain: "hocluatcungcrush.firebaseapp.com",
-    databaseURL: "https://hocluatcungcrush-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "hocluatcungcrush",
-    storageBucket: "hocluatcungcrush.firebasestorage.app",
-    messagingSenderId: "904057128627",
-    appId: "1:904057128627:web:689a11c925c4176371d2c6"
-  };
+      let db = null;
+      const state = () => document.getElementById("onlineLeaderboardState");
+      const board = () => document.getElementById("leaderboard");
 
-  const firebaseApp = initializeApp(firebaseConfig);
-  const onlineDb = getDatabase(firebaseApp);
-  const onlineState = document.getElementById("onlineLeaderboardState");
+      function setState(text) {
+        const el = state();
+        if (el) el.textContent = text;
+      }
 
-  function getPlayerName() {
-    const inputName = document.getElementById("accountName")?.value?.trim();
-    const storedName = localStorage.getItem("hoc_luat_account") || localStorage.getItem("hocluat_account") || localStorage.getItem("accountName");
-    return inputName || storedName || "Ẩn danh";
-  }
+      function safeName() {
+        const typed = document.getElementById("accountName")?.value?.trim();
+        const saved = (() => {
+          try {
+            const raw = localStorage.getItem("criminalLawQuiz.v3.account");
+            return raw ? JSON.parse(raw)?.name : "";
+          } catch (_) {
+            return "";
+          }
+        })();
+        return String(typed || saved || "Ẩn danh").slice(0, 32);
+      }
 
-  function getCurrentScoreData() {
-    const scoreText = document.getElementById("scoreValue")?.textContent || "";
-    const parsedScore = parseFloat(scoreText.replace(",", "."));
-    const score = Number.isFinite(parsedScore) ? parsedScore : 0;
-
-    const metaText = document.getElementById("progressMeta")?.textContent || "";
-    const selectedMatch = metaText.match(/Đã chọn\s+(\d+)\/(\d+)/i);
-    const total = selectedMatch ? Number(selectedMatch[2]) : 60;
-
-    let correct = Math.round((score / 10) * total);
-    if (!Number.isFinite(correct)) correct = 0;
-
-    return { score, correct, total };
-  }
-
-  window.saveOnlineScore = async function(name, score, correct, total) {
-    const itemRef = push(ref(onlineDb, "leaderboard"));
-    const safeName = String(name || "Ẩn danh").slice(0, 32);
-    return set(itemRef, {
-      name: safeName,
-      score: Number(score) || 0,
-      correct: Number(correct) || 0,
-      total: Number(total) || 0,
-      createdAt: Date.now()
-    });
-  };
-
-  window.loadOnlineLeaderboard = function() {
-    const board = document.getElementById("leaderboard");
-    if (!board) return;
-
-    const q = query(ref(onlineDb, "leaderboard"), orderByChild("score"), limitToLast(20));
-
-    onValue(q, (snapshot) => {
-      const data = [];
-      snapshot.forEach((child) => data.push(child.val()));
-      data.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.createdAt || 0) - (a.createdAt || 0));
-
-      if (onlineState) onlineState.textContent = "Đã kết nối Firebase";
-
-      if (!data.length) {
-        board.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        setState("Đã kết nối Firebase");
+      } catch (error) {
+        console.error("Firebase init failed:", error);
+        setState("Lỗi khởi tạo Firebase");
         return;
       }
 
-      board.innerHTML = data.slice(0, 10).map((item, index) => {
-        const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "";
-        return `
-          <div class="leader-row">
-            ${index + 1}. ${item.name || "Ẩn danh"} - ${Number(item.score || 0).toFixed(2)}/10
-            <small>${item.correct || 0}/${item.total || 0} câu đúng • ${date}</small>
-          </div>
-        `;
-      }).join("");
-    }, (error) => {
-      if (onlineState) onlineState.textContent = "Lỗi kết nối Firebase";
-      console.error("Firebase leaderboard error:", error);
-    });
-  };
-  window.loadOnlineLeaderboard();
-</script>
+      window.hocLuatSaveOnlineScore = function (result) {
+        if (!db || !result) return Promise.resolve();
+        const payload = {
+          name: safeName(),
+          score: Number(Number(result.point || 0).toFixed(1)),
+          correct: Number(result.correct || 0),
+          total: Number(result.total || 0),
+          set: String(result.set || ""),
+          mode: String(result.mode || ""),
+          durationSec: Number(result.durationSec || 0),
+          createdAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        setState("Đang lưu điểm...");
+        return db.ref("leaderboard").push(payload).then(() => {
+          setState("Đã lưu điểm lên Firebase");
+        });
+      };
+
+      window.hocLuatLoadOnlineLeaderboard = function () {
+        const el = board();
+        if (!db || !el) return;
+        db.ref("leaderboard").orderByChild("score").limitToLast(30).on("value", (snapshot) => {
+          const data = [];
+          snapshot.forEach((child) => data.push(child.val()));
+          data.sort((a, b) => (Number(b.score || 0) - Number(a.score || 0)) || (Number(b.createdAt || 0) - Number(a.createdAt || 0)));
+          setState("Đã kết nối Firebase");
+          if (!data.length) {
+            el.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
+            return;
+          }
+          el.innerHTML = data.slice(0, 10).map((item, index) => {
+            const d = item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "";
+            const score = Number(item.score || 0).toFixed(1);
+            return `<div class="leader-row"><b>#${index + 1} • ${item.name || "Ẩn danh"} • ${score}/10</b><small>${item.correct || 0}/${item.total || 0} câu đúng • ${item.set || ""} • ${d}</small></div>`;
+          }).join("");
+        }, (error) => {
+          console.error("Firebase read failed:", error);
+          setState("Lỗi đọc Firebase: " + (error.code || error.message || "unknown"));
+        });
+      };
+
+      window.hocLuatLoadOnlineLeaderboard();
+    })();
+  </script>
 
 </body>
 </html>
