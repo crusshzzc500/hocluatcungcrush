@@ -1764,5 +1764,13 @@
     })();
   </script>
 
+
+  <script>
+    // Fix phụ: tránh lỗi khi bản giao diện không còn màn hình chi tiết kết quả
+    window.showResultDetail = window.showResultDetail || function () {
+      return false;
+    };
+  </script>
+
 </body>
 </html>
