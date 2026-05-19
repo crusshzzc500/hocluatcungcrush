@@ -584,7 +584,7 @@
 
   
 
-    /* CLEAN COMPACT ACTION BAR UPDATE */
+    /* FIREBASE ONLINE LEADERBOARD + COMPACT UPDATE */
     .control-bar {
       position: relative;
       top: auto;
@@ -613,6 +613,23 @@
     .progress-top { gap: 6px; }
     .set-title { font-size: .98rem; }
     .progress-meta { font-size: .82rem; }
+    .online-badge {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-top:4px;
+      color:var(--teal);
+      font-size:.78rem;
+      font-weight:900;
+    }
+    .online-badge::before {
+      content:"";
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--teal);
+      box-shadow:0 0 0 4px rgba(5,137,130,.12);
+    }
 
     @media (max-width: 680px) {
       .app { width: min(100% - 14px, 1220px); padding-top: 8px; }
@@ -646,10 +663,6 @@
       .option-letter { width: 32px; height: 32px; }
       .option-text { font-size: .94rem; line-height: 1.42; }
       .side-panel { grid-template-columns: 1fr; }
-    }
-
-    @media (min-width: 681px) and (max-width: 1000px) {
-      .main-actions { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     }
 
   </style>
@@ -759,7 +772,7 @@
             <details class="pro-details"><summary>Biểu đồ tiến bộ</summary><div id="progressChart" class="spark-chart"></div></details>
             <details class="pro-details"><summary>Lịch sử làm bài</summary><div id="historyBox" class="compact-list"></div></details>
             <details class="pro-details"><summary>Câu đã ghim</summary><div id="bookmarkBox" class="compact-list"></div></details>
-            <details class="pro-details"><summary>Bảng xếp hạng</summary><div class="leaderboard compact-list" id="leaderboard"></div></details>
+            <details class="pro-details" open><summary>Bảng xếp hạng online</summary><div class="online-badge" id="onlineLeaderboardState">Đang kết nối Firebase...</div><div class="leaderboard compact-list" id="leaderboard"></div></details>
           </div>
 
           <div style="display:none" aria-hidden="true">
@@ -1655,5 +1668,110 @@
     drawCanvas();
     window.addEventListener("resize", drawCanvas);
   </script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getDatabase, ref, push, set, onValue, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB7TlOy5XvF8ttxGiTAFmucYLRsTMscIUU",
+    authDomain: "hocluatcungcrush.firebaseapp.com",
+    databaseURL: "https://hocluatcungcrush-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "hocluatcungcrush",
+    storageBucket: "hocluatcungcrush.firebasestorage.app",
+    messagingSenderId: "904057128627",
+    appId: "1:904057128627:web:689a11c925c4176371d2c6"
+  };
+
+  const firebaseApp = initializeApp(firebaseConfig);
+  const onlineDb = getDatabase(firebaseApp);
+  const onlineState = document.getElementById("onlineLeaderboardState");
+
+  function getPlayerName() {
+    const inputName = document.getElementById("accountName")?.value?.trim();
+    const storedName = localStorage.getItem("hoc_luat_account") || localStorage.getItem("hocluat_account") || localStorage.getItem("accountName");
+    return inputName || storedName || "Ẩn danh";
+  }
+
+  function getCurrentScoreData() {
+    const scoreText = document.getElementById("scoreValue")?.textContent || "";
+    const parsedScore = parseFloat(scoreText.replace(",", "."));
+    const score = Number.isFinite(parsedScore) ? parsedScore : 0;
+
+    const metaText = document.getElementById("progressMeta")?.textContent || "";
+    const selectedMatch = metaText.match(/Đã chọn\s+(\d+)\/(\d+)/i);
+    const total = selectedMatch ? Number(selectedMatch[2]) : 60;
+
+    let correct = Math.round((score / 10) * total);
+    if (!Number.isFinite(correct)) correct = 0;
+
+    return { score, correct, total };
+  }
+
+  window.saveOnlineScore = async function(name, score, correct, total) {
+    const itemRef = push(ref(onlineDb, "leaderboard"));
+    const safeName = String(name || "Ẩn danh").slice(0, 32);
+    return set(itemRef, {
+      name: safeName,
+      score: Number(score) || 0,
+      correct: Number(correct) || 0,
+      total: Number(total) || 0,
+      createdAt: Date.now()
+    });
+  };
+
+  window.loadOnlineLeaderboard = function() {
+    const board = document.getElementById("leaderboard");
+    if (!board) return;
+
+    const q = query(ref(onlineDb, "leaderboard"), orderByChild("score"), limitToLast(20));
+
+    onValue(q, (snapshot) => {
+      const data = [];
+      snapshot.forEach((child) => data.push(child.val()));
+      data.sort((a, b) => (b.score || 0) - (a.score || 0) || (b.createdAt || 0) - (a.createdAt || 0));
+
+      if (onlineState) onlineState.textContent = "Đã kết nối Firebase";
+
+      if (!data.length) {
+        board.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
+        return;
+      }
+
+      board.innerHTML = data.slice(0, 10).map((item, index) => {
+        const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "";
+        return `
+          <div class="leader-row">
+            ${index + 1}. ${item.name || "Ẩn danh"} - ${Number(item.score || 0).toFixed(2)}/10
+            <small>${item.correct || 0}/${item.total || 0} câu đúng • ${date}</small>
+          </div>
+        `;
+      }).join("");
+    }, (error) => {
+      if (onlineState) onlineState.textContent = "Lỗi kết nối Firebase";
+      console.error("Firebase leaderboard error:", error);
+    });
+  };
+
+  function hookSubmitButton() {
+    const submitBtn = document.getElementById("submitBtn");
+    if (!submitBtn || submitBtn.dataset.firebaseHooked === "1") return;
+    submitBtn.dataset.firebaseHooked = "1";
+
+    submitBtn.addEventListener("click", () => {
+      setTimeout(() => {
+        const { score, correct, total } = getCurrentScoreData();
+        const name = getPlayerName();
+        if (score > 0 || correct > 0) {
+          window.saveOnlineScore(name, score, correct, total).catch(console.error);
+        }
+      }, 700);
+    });
+  }
+
+  window.loadOnlineLeaderboard();
+  hookSubmitButton();
+</script>
+
 </body>
 </html>
