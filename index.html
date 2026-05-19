@@ -1138,6 +1138,19 @@
       progressFill.style.width = `${Math.round((correct / total) * 100)}%`;
       submitBtn.disabled = true;
       addLeaderboard(lastResult);
+      if (window.saveOnlineScore) {
+        window.saveOnlineScore(
+          currentUser?.name || document.getElementById("accountName")?.value || "Ẩn danh",
+          Number(lastResult.point.toFixed(1)),
+          lastResult.correct,
+          lastResult.total,
+          lastResult.set
+        ).catch(error => {
+          console.error("Không lưu được điểm Firebase:", error);
+          const state = document.getElementById("onlineLeaderboardState");
+          if (state) state.textContent = "Lỗi lưu điểm Firebase";
+        });
+      }
       queueSync(lastResult);
       updateTimerUI();
       saveProgress();
@@ -1752,25 +1765,7 @@
       console.error("Firebase leaderboard error:", error);
     });
   };
-
-  function hookSubmitButton() {
-    const submitBtn = document.getElementById("submitBtn");
-    if (!submitBtn || submitBtn.dataset.firebaseHooked === "1") return;
-    submitBtn.dataset.firebaseHooked = "1";
-
-    submitBtn.addEventListener("click", () => {
-      setTimeout(() => {
-        const { score, correct, total } = getCurrentScoreData();
-        const name = getPlayerName();
-        if (score > 0 || correct > 0) {
-          window.saveOnlineScore(name, score, correct, total).catch(console.error);
-        }
-      }, 700);
-    });
-  }
-
   window.loadOnlineLeaderboard();
-  hookSubmitButton();
 </script>
 
 </body>

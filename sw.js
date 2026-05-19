@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hoc-luat-firebase-v2';
+const CACHE_NAME = 'hoc-luat-firebase-v3';
 const ASSETS = ['./', './index.html', './manifest.json'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
