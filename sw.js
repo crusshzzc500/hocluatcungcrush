@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hoc-luat-firebase-safe-v6';
+const CACHE_NAME = 'hoc-luat-firebase-clean-v7';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {

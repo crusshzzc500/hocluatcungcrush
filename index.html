@@ -1772,5 +1772,15 @@
     };
   </script>
 
+
+  <script>
+    // Console cleanup: bỏ lỗi promise rỗng từ onboarding/devtools cũ, không ảnh hưởng Firebase.
+    window.addEventListener("unhandledrejection", function (event) {
+      if (event && (event.reason === undefined || event.reason === null)) {
+        event.preventDefault();
+      }
+    });
+  </script>
+
 </body>
 </html>
