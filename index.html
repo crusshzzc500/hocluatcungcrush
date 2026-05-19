@@ -482,6 +482,91 @@
       animation: burstCard .9s ease both;
     }
     .result-burst-card b { display: block; font-size: 2rem; margin-bottom: 4px; }
+    .rank-burst {
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,.26), transparent 0 15%, rgba(255,255,255,0) 36%),
+        linear-gradient(135deg, rgba(81,13,31,.28), rgba(5,137,130,.24));
+      backdrop-filter: blur(5px);
+    }
+    .rank-burst-card {
+      position: relative;
+      width: min(560px, calc(100vw - 28px));
+      padding: 26px 22px 24px;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(81,13,31,.98), rgba(141,24,51,.92) 44%, rgba(5,137,130,.94)),
+        #510d1f;
+      box-shadow: 0 34px 100px rgba(0,0,0,.42), 0 0 0 1px rgba(255,255,255,.22) inset;
+      animation: rankPop .72s cubic-bezier(.2, 1.2, .3, 1) both;
+    }
+    .rank-burst-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(from 90deg, transparent, rgba(255,228,163,.5), transparent 18%, rgba(45,212,191,.34), transparent 32%);
+      animation: shineSpin 3.5s linear infinite;
+    }
+    .rank-burst-card > * { position: relative; z-index: 1; }
+    .rank-badge {
+      width: 116px;
+      height: 116px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      color: #3b2105;
+      background: radial-gradient(circle at 35% 24%, #fff7c8, #f7bd4a 48%, #be7720 100%);
+      border: 2px solid rgba(255,255,255,.82);
+      box-shadow: 0 18px 42px rgba(0,0,0,.24), 0 0 0 10px rgba(247,189,74,.16);
+      font-size: 2.55rem;
+      font-weight: 950;
+    }
+    .rank-kicker {
+      color: #ffe4a3;
+      font-size: .82rem;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .rank-title {
+      margin-top: 4px;
+      color: #fffdf7;
+      font-size: clamp(1.55rem, 5vw, 2.35rem);
+      line-height: 1.08;
+      font-weight: 950;
+    }
+    .rank-note {
+      margin-top: 9px;
+      color: #fff4de;
+      font-weight: 820;
+      line-height: 1.5;
+    }
+    .rank-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .rank-stat {
+      min-height: 62px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      padding: 9px;
+      border-radius: 10px;
+      background: rgba(255,255,255,.13);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+    .rank-stat b { color: #fff; font-size: 1.08rem; }
+    .rank-stat span { color: #ffe4a3; font-size: .75rem; font-weight: 900; }
+    .rank-spark {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      box-shadow: 0 0 16px currentColor;
+      animation: sparkFly 1.4s ease-out forwards;
+    }
     .confetti-dot {
       position: absolute;
       width: 9px;
@@ -494,6 +579,19 @@
       0% { opacity: 0; transform: translateY(16px) scale(.94); }
       18%, 82% { opacity: 1; transform: none; }
       100% { opacity: 0; transform: translateY(-12px) scale(.98); }
+    }
+    @keyframes rankPop {
+      0% { opacity: 0; transform: translateY(28px) scale(.84) rotate(-1deg); }
+      68% { opacity: 1; transform: translateY(-4px) scale(1.02); }
+      100% { opacity: 1; transform: none; }
+    }
+    @keyframes shineSpin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes sparkFly {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(.35); }
+      70% { opacity: .95; }
+      100% { opacity: 0; transform: translate(calc(var(--spark-x) - 50%), calc(var(--spark-y) - 50%)) scale(1.25); }
     }
     @keyframes fall {
       to { transform: translateY(110vh) rotate(420deg); opacity: .1; }
@@ -1353,6 +1451,60 @@
       document.body.appendChild(burst);
       setTimeout(() => burst.remove(), 1800);
     }
+    function showRankCelebration(info) {
+      if (!info || !Number.isFinite(Number(info.rank)) || Number(info.rank) > 20) return;
+      const old = document.querySelector(".result-burst");
+      if (old) old.remove();
+      const burst = document.createElement("div");
+      const rank = Number(info.rank);
+      const score = Number(info.score || 0).toFixed(1);
+      const correct = Number(info.correct || 0);
+      const total = Number(info.total || 0);
+      const duration = Number.isFinite(Number(info.durationSec)) && Number(info.durationSec) > 0
+        ? `${Math.floor(Number(info.durationSec) / 60)}p${Number(info.durationSec) % 60}s`
+        : "--";
+      const palette = ["#fff7c8", "#f7bd4a", "#2dd4bf", "#fb7185", "#4ade80", "#ffffff"];
+      burst.className = "result-burst rank-burst";
+      burst.innerHTML = `
+        <div class="result-burst-card rank-burst-card">
+          <div class="rank-badge">#${rank}</div>
+          <div class="rank-kicker">Lọt top 20 bảng xếp hạng</div>
+          <div class="rank-title">Chúc mừng ${escapeHtml(info.name || "bạn")}!</div>
+          <div class="rank-note">Bạn đang đứng hạng <b>#${rank}</b> với <b>${score}/10</b>${info.set ? ` ở ${escapeHtml(info.set)}` : ""}. Bảng xếp hạng đã cập nhật online.</div>
+          <div class="rank-stats">
+            <div class="rank-stat"><b>${score}/10</b><span>Điểm</span></div>
+            <div class="rank-stat"><b>${correct}/${total}</b><span>Câu đúng</span></div>
+            <div class="rank-stat"><b>${duration}</b><span>Thời gian</span></div>
+          </div>
+        </div>`;
+      for (let i = 0; i < 86; i += 1) {
+        const dot = document.createElement("span");
+        dot.className = "confetti-dot";
+        dot.style.left = `${Math.random() * 100}%`;
+        dot.style.background = palette[i % palette.length];
+        dot.style.animationDuration = `${1.25 + Math.random() * 1.1}s`;
+        dot.style.animationDelay = `${Math.random() * .5}s`;
+        dot.style.transform = `rotate(${Math.random() * 240}deg)`;
+        burst.appendChild(dot);
+      }
+      for (let i = 0; i < 38; i += 1) {
+        const spark = document.createElement("span");
+        const angle = (Math.PI * 2 * i) / 38;
+        const distance = 150 + Math.random() * 180;
+        spark.className = "rank-spark";
+        spark.style.left = `${45 + Math.random() * 10}%`;
+        spark.style.top = `${42 + Math.random() * 10}%`;
+        spark.style.color = palette[i % palette.length];
+        spark.style.background = "currentColor";
+        spark.style.setProperty("--spark-x", `${Math.cos(angle) * distance}px`);
+        spark.style.setProperty("--spark-y", `${Math.sin(angle) * distance}px`);
+        spark.style.animationDelay = `${Math.random() * .38}s`;
+        burst.appendChild(spark);
+      }
+      document.body.appendChild(burst);
+      setTimeout(() => burst.remove(), 5600);
+    }
+    window.hocLuatShowRankCelebration = showRankCelebration;
     function loadAccount() {
       try { currentUser = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || "null"); } catch { currentUser = null; }
       renderAccount();
@@ -1787,6 +1939,28 @@
         return compareRows(next, current) < 0;
       }
 
+      function rowsFromSnapshot(snapshot) {
+        const bestByPlayer = new Map();
+        snapshot.forEach((child) => {
+          const value = child.val();
+          if (!value || typeof value !== "object") return;
+          const row = {
+            ...value,
+            playerId: playerIdForRead(value, child.key),
+            name: String(value.name || value.user || "Ẩn danh").slice(0, 32),
+            score: Number(value.score || value.point || 0),
+            correct: Number(value.correct || 0),
+            total: Number(value.total || 0),
+            durationSec: Number(value.durationSec || 0),
+            set: String(value.set || ""),
+            attempts: Number(value.attempts || 1)
+          };
+          const old = bestByPlayer.get(row.playerId);
+          if (!old || compareRows(row, old) < 0) bestByPlayer.set(row.playerId, row);
+        });
+        return [...bestByPlayer.values()].sort(compareRows);
+      }
+
       function renderOnlineLeaderboard() {
         const el = board();
         if (!el) return;
@@ -1798,7 +1972,7 @@
           el.innerHTML = '<div class="panel-note">Chưa có ai nộp điểm online.</div>';
           return;
         }
-        el.innerHTML = onlineRows.slice(0, 10).map((item, index) => {
+        el.innerHTML = onlineRows.slice(0, 20).map((item, index) => {
           const score = Number(item.score || 0).toFixed(1);
           const stamp = Number(item.updatedAt || item.createdAt || item.updatedAtClient || item.createdAtClient || 0);
           const date = stamp ? new Date(stamp).toLocaleString("vi-VN") : "";
@@ -1868,6 +2042,20 @@
         }).then((resultState) => {
           if (!resultState.committed) throw new Error("Firebase không nhận lượt ghi");
           setState("Đã cập nhật bảng xếp hạng online");
+          return db.ref("leaderboard").once("value").then((snapshot) => {
+            onlineRows = rowsFromSnapshot(snapshot).slice(0, 100);
+            onlineReady = true;
+            renderOnlineLeaderboard();
+            const rankIndex = onlineRows.findIndex((row) => row.playerId === playerId);
+            const rankedRow = rankIndex >= 0 ? onlineRows[rankIndex] : null;
+            const rank = rankIndex + 1;
+            if (rankedRow && rank > 0 && rank <= 20) {
+              setState(`Chúc mừng ${rankedRow.name || "bạn"} đang hạng #${rank} online`);
+              if (window.hocLuatShowRankCelebration) {
+                window.hocLuatShowRankCelebration({ ...rankedRow, rank });
+              }
+            }
+          });
         });
       };
 
@@ -1877,25 +2065,7 @@
         leaderboardRef = db.ref("leaderboard");
         setState("Đang tải bảng xếp hạng online...");
         leaderboardRef.on("value", (snapshot) => {
-          const bestByPlayer = new Map();
-          snapshot.forEach((child) => {
-            const value = child.val();
-            if (!value || typeof value !== "object") return;
-            const row = {
-              ...value,
-              playerId: playerIdForRead(value, child.key),
-              name: String(value.name || value.user || "Ẩn danh").slice(0, 32),
-              score: Number(value.score || value.point || 0),
-              correct: Number(value.correct || 0),
-              total: Number(value.total || 0),
-              durationSec: Number(value.durationSec || 0),
-              set: String(value.set || ""),
-              attempts: Number(value.attempts || 1)
-            };
-            const old = bestByPlayer.get(row.playerId);
-            if (!old || compareRows(row, old) < 0) bestByPlayer.set(row.playerId, row);
-          });
-          onlineRows = [...bestByPlayer.values()].sort(compareRows).slice(0, 50);
+          onlineRows = rowsFromSnapshot(snapshot).slice(0, 100);
           onlineReady = true;
           setState("Đã kết nối Firebase");
           renderOnlineLeaderboard();
