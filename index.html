@@ -864,7 +864,6 @@
             <details class="pro-details"><summary>Thống kê chương</summary><div class="chapter-stats compact-list" id="chapterStats"></div></details>
             <details class="pro-details"><summary>AI phân tích điểm yếu</summary><div class="ai-insight compact-list" id="aiInsight"><div class="panel-note">Nộp bài xong sẽ có phân tích.</div></div></details>
             <details class="pro-details"><summary>Biểu đồ tiến bộ</summary><div id="progressChart" class="spark-chart"></div></details>
-            <details class="pro-details"><summary>Lịch sử làm bài</summary><div id="historyBox" class="compact-list"></div></details>
             <details class="pro-details"><summary>Câu đã ghim</summary><div id="bookmarkBox" class="compact-list"></div></details>
             <details class="pro-details" open><summary>Bảng xếp hạng online</summary><div class="online-badge" id="onlineLeaderboardState">Đang kết nối Firebase...</div><div class="leaderboard compact-list" id="leaderboard"></div></details>
           </div>
@@ -1798,7 +1797,7 @@
     stage.addEventListener("touchend", e => { if (touchX == null) return; const dx = e.changedTouches[0].clientX - touchX; if (Math.abs(dx) > 60) { if (dx < 0 && currentIndex < displayQuestions.length-1) currentIndex++; if (dx > 0 && currentIndex > 0) currentIndex--; render(); } touchX = null; }, { passive:true });
     document.addEventListener("change", e => { if (e.target && e.target.matches(".option input")) setTimeout(() => tone("ok"), 20); });
     window.addEventListener("load", () => {
-      document.getElementById("bookmarkListBtn")?.addEventListener("click", () => document.querySelectorAll(".pro-details")[5]?.setAttribute("open", ""));
+      document.getElementById("bookmarkListBtn")?.addEventListener("click", () => document.getElementById("bookmarkBox")?.closest("details")?.setAttribute("open", ""));
       document.getElementById("smartRandomBtn")?.addEventListener("click", startSmartRandom);
       renderAdvancedPanel();
       if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("./sw.js?v=8").catch(()=>{});
