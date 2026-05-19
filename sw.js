@@ -1,5 +1,5 @@
-const CACHE_NAME = 'hoc-luat-firebase-clean-v7';
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE_NAME = 'hoc-luat-firebase-clean-v8';
+const ASSETS = ['./manifest.json'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -24,6 +24,21 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET') return;
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
   if (url.origin !== self.location.origin) return;
+
+  if (request.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('/index.html')) {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (!response || response.status !== 200 || response.type !== 'basic') return response;
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put('./', copy.clone());
+          cache.put('./index.html', copy);
+        });
+        return response;
+      }).catch(() => caches.match(request).then(cached => cached || caches.match('./index.html')))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then(cached => {
