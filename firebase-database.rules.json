@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "leaderboard": {
+      ".read": true,
+      ".indexOn": ["score", "updatedAtClient"],
+      "$playerId": {
+        ".write": "newData.child('playerId').val() == $playerId && (!data.exists() || newData.child('attempts').val() == data.child('attempts').val() + 1)",
+        ".validate": "newData.hasChildren(['playerId', 'name', 'score', 'correct', 'total', 'set', 'durationSec', 'attempts']) && newData.child('playerId').isString() && newData.child('name').isString() && newData.child('name').val().length <= 32 && newData.child('score').isNumber() && newData.child('score').val() >= 0 && newData.child('score').val() <= 10 && newData.child('correct').isNumber() && newData.child('correct').val() >= 0 && newData.child('correct').val() <= 60 && newData.child('total').isNumber() && newData.child('total').val() >= 1 && newData.child('total').val() <= 60 && newData.child('set').isString() && newData.child('set').val().length <= 24 && (!newData.child('mode').exists() || newData.child('mode').isString()) && newData.child('durationSec').isNumber() && newData.child('durationSec').val() >= 0 && newData.child('durationSec').val() <= 7200 && newData.child('attempts').isNumber() && newData.child('attempts').val() >= 1 && newData.child('attempts').val() <= 1000 && (!newData.child('createdAtClient').exists() || newData.child('createdAtClient').isNumber()) && (!newData.child('updatedAtClient').exists() || newData.child('updatedAtClient').isNumber()) && (!newData.child('lastTriedAtClient').exists() || newData.child('lastTriedAtClient').isNumber())"
+      }
+    }
+  }
+}
